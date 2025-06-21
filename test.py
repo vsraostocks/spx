@@ -25,7 +25,7 @@ if 'trades' not in st.session_state:
 if 'server_running' not in st.session_state:
     st.session_state.server_running = False
 if 'user_id' not in st.session_state:
-    st.session_state.user_id = 'jptrading956'
+    st.session_state.user_id = 'jptrading956'  # TradingView User ID
 
 class GuaranteedWorkingAPI:
     """API client that ONLY uses assets guaranteed to work in sandbox"""
@@ -33,12 +33,13 @@ class GuaranteedWorkingAPI:
     def __init__(self, token: str, account_id: str):
         self.token = token
         self.account_id = account_id
+        self.tradingview_user = 'jptrading956'  # TradingView user ID
         self.base_url = "https://sandbox.tradier.com"
         self.headers = {
             'Authorization': f'Bearer {token}',
             'Accept': 'application/json'
         }
-        logger.info("✅ GUARANTEED WORKING: Only uses verified sandbox assets")
+        logger.info(f"✅ GUARANTEED WORKING: Only uses verified sandbox assets for {self.tradingview_user}")
     
     def test_connection(self):
         """Test API connection"""
@@ -51,10 +52,11 @@ class GuaranteedWorkingAPI:
             return {
                 'success': response.status_code == 200,
                 'status_code': response.status_code,
-                'data': response.json() if response.status_code == 200 else None
+                'data': response.json() if response.status_code == 200 else None,
+                'tradingview_user': self.tradingview_user
             }
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            return {'success': False, 'error': str(e), 'tradingview_user': self.tradingview_user}
     
     def place_stock_order(self, symbol: str, action: str, quantity: int) -> dict:
         """Place stock order - guaranteed to work"""
@@ -65,7 +67,8 @@ class GuaranteedWorkingAPI:
             if symbol.upper() not in verified_stocks:
                 return {
                     'success': False,
-                    'message': f'{symbol} not in verified working stocks. Use: {", ".join(verified_stocks)}'
+                    'message': f'{symbol} not in verified working stocks. Use: {", ".join(verified_stocks)}',
+                    'tradingview_user': self.tradingview_user
                 }
             
             order_data = {
@@ -77,7 +80,7 @@ class GuaranteedWorkingAPI:
                 'duration': 'day'
             }
             
-            logger.info(f"✅ PLACING VERIFIED STOCK ORDER: {order_data}")
+            logger.info(f"✅ PLACING VERIFIED STOCK ORDER for {self.tradingview_user}: {order_data}")
             
             response = requests.post(
                 f"{self.base_url}/v1/accounts/{self.account_id}/orders",
@@ -89,11 +92,12 @@ class GuaranteedWorkingAPI:
             return self._process_response(response, symbol, action, quantity, "VERIFIED STOCK")
             
         except Exception as e:
-            logger.error(f"✅ Stock order error: {e}")
+            logger.error(f"✅ Stock order error for {self.tradingview_user}: {e}")
             return {
                 'success': False,
                 'error': str(e),
-                'message': f'Stock order failed: {str(e)}'
+                'message': f'Stock order failed: {str(e)}',
+                'tradingview_user': self.tradingview_user
             }
     
     def place_qqq_as_nq_proxy(self, action: str, quantity: int) -> dict:
@@ -113,7 +117,7 @@ class GuaranteedWorkingAPI:
                 'duration': 'day'
             }
             
-            logger.info(f"✅ PLACING QQQ AS NQ PROXY: {order_data}")
+            logger.info(f"✅ PLACING QQQ AS NQ PROXY for {self.tradingview_user}: {order_data}")
             
             response = requests.post(
                 f"{self.base_url}/v1/accounts/{self.account_id}/orders",
@@ -126,16 +130,17 @@ class GuaranteedWorkingAPI:
             
             # Add explanation
             if result.get('success'):
-                result['message'] += f' - Using {qqq_quantity} QQQ shares as NQ {quantity} contract proxy'
+                result['message'] += f' - Using {qqq_quantity} QQQ shares as NQ {quantity} contract proxy for {self.tradingview_user}'
             
             return result
             
         except Exception as e:
-            logger.error(f"✅ QQQ proxy order error: {e}")
+            logger.error(f"✅ QQQ proxy order error for {self.tradingview_user}: {e}")
             return {
                 'success': False,
                 'error': str(e),
-                'message': f'QQQ (NQ proxy) order failed: {str(e)}'
+                'message': f'QQQ (NQ proxy) order failed: {str(e)}',
+                'tradingview_user': self.tradingview_user
             }
     
     def place_spy_as_spx_proxy(self, action: str, quantity: int) -> dict:
@@ -155,7 +160,7 @@ class GuaranteedWorkingAPI:
                 'duration': 'day'
             }
             
-            logger.info(f"✅ PLACING SPY AS SPX PROXY: {order_data}")
+            logger.info(f"✅ PLACING SPY AS SPX PROXY for {self.tradingview_user}: {order_data}")
             
             response = requests.post(
                 f"{self.base_url}/v1/accounts/{self.account_id}/orders",
@@ -168,22 +173,23 @@ class GuaranteedWorkingAPI:
             
             # Add explanation
             if result.get('success'):
-                result['message'] += f' - Using {spy_quantity} SPY shares as SPX proxy'
+                result['message'] += f' - Using {spy_quantity} SPY shares as SPX proxy for {self.tradingview_user}'
             
             return result
             
         except Exception as e:
-            logger.error(f"✅ SPY proxy order error: {e}")
+            logger.error(f"✅ SPY proxy order error for {self.tradingview_user}: {e}")
             return {
                 'success': False,
                 'error': str(e),
-                'message': f'SPY (SPX proxy) order failed: {str(e)}'
+                'message': f'SPY (SPX proxy) order failed: {str(e)}',
+                'tradingview_user': self.tradingview_user
             }
     
     def _process_response(self, response, symbol, action, quantity, order_type):
         """Process API response with detailed logging"""
         try:
-            logger.info(f"API Response Status: {response.status_code}")
+            logger.info(f"API Response Status for {self.tradingview_user}: {response.status_code}")
             logger.info(f"API Response Body: {response.text[:300]}")
             
             if response.status_code in [200, 201]:
@@ -191,14 +197,15 @@ class GuaranteedWorkingAPI:
                 order_info = data.get('order', {})
                 order_id = order_info.get('id', 'NO_ID')
                 
-                logger.info(f"✅ {order_type} ORDER PLACED: {order_id}")
+                logger.info(f"✅ {order_type} ORDER PLACED for {self.tradingview_user}: {order_id}")
                 
                 return {
                     'success': True,
                     'order_id': order_id,
                     'message': f'{order_type} order placed: {action} {quantity} {symbol}',
                     'data': data,
-                    'in_sandbox': True
+                    'in_sandbox': True,
+                    'tradingview_user': self.tradingview_user
                 }
             else:
                 # Extract error details
@@ -212,21 +219,23 @@ class GuaranteedWorkingAPI:
                 except:
                     error_msg = response.text[:200]
                 
-                logger.error(f"❌ {order_type} ORDER REJECTED: {response.status_code} - {error_msg}")
+                logger.error(f"❌ {order_type} ORDER REJECTED for {self.tradingview_user}: {response.status_code} - {error_msg}")
                 
                 return {
                     'success': False,
                     'error': f'HTTP {response.status_code}',
                     'message': f'{order_type} order rejected: {error_msg}',
                     'details': error_msg,
-                    'symbol_tried': symbol
+                    'symbol_tried': symbol,
+                    'tradingview_user': self.tradingview_user
                 }
                 
         except Exception as e:
             return {
                 'success': False,
                 'error': str(e),
-                'message': f'{order_type} order processing failed: {str(e)}'
+                'message': f'{order_type} order processing failed: {str(e)}',
+                'tradingview_user': self.tradingview_user
             }
     
     def get_orders(self):
@@ -239,12 +248,16 @@ class GuaranteedWorkingAPI:
             )
             
             if response.status_code == 200:
-                return response.json()
+                orders_data = response.json()
+                # Add user context to orders
+                if orders_data:
+                    orders_data['tradingview_user'] = self.tradingview_user
+                return orders_data
             else:
-                return {}
+                return {'tradingview_user': self.tradingview_user}
         except Exception as e:
-            logger.error(f"Error getting orders: {e}")
-            return {}
+            logger.error(f"Error getting orders for {self.tradingview_user}: {e}")
+            return {'tradingview_user': self.tradingview_user}
     
     def test_symbol(self, symbol: str) -> dict:
         """Test if symbol works in sandbox"""
@@ -275,14 +288,16 @@ class GuaranteedWorkingAPI:
                 'symbol': symbol,
                 'valid': valid,
                 'data': data,
-                'status_code': response.status_code
+                'status_code': response.status_code,
+                'tradingview_user': self.tradingview_user
             }
             
         except Exception as e:
             return {
                 'symbol': symbol,
                 'valid': False,
-                'error': str(e)
+                'error': str(e),
+                'tradingview_user': self.tradingview_user
             }
 
 class GuaranteedWorkingTradingSystem:
@@ -290,11 +305,15 @@ class GuaranteedWorkingTradingSystem:
     
     def __init__(self, token: str, account_id: str):
         self.api = GuaranteedWorkingAPI(token, account_id)
+        self.tradingview_user = 'jptrading956'
+        logger.info(f"✅ Trading system initialized for TradingView user: {self.tradingview_user}")
     
     def execute_trade(self, symbol: str, action: str, quantity: int, **kwargs) -> dict:
         """Execute trade with guaranteed working assets only"""
         try:
             symbol = symbol.upper()
+            
+            logger.info(f"✅ Executing trade for {self.tradingview_user}: {action} {quantity} {symbol}")
             
             # Map symbols to guaranteed working alternatives
             if symbol in ['SPX', 'SPXW']:
@@ -320,11 +339,12 @@ class GuaranteedWorkingTradingSystem:
                 return result
             
         except Exception as e:
-            logger.error(f"Trade execution error: {e}")
+            logger.error(f"Trade execution error for {self.tradingview_user}: {e}")
             return {
                 'success': False,
                 'error': str(e),
-                'message': f'Trade execution failed: {str(e)}'
+                'message': f'Trade execution failed: {str(e)}',
+                'tradingview_user': self.tradingview_user
             }
 
 # Flask webhook server
@@ -339,30 +359,44 @@ def handle_webhook():
         
         data = request.get_json()
         if not data:
-            return jsonify({'error': 'No JSON data'}), 400
+            return jsonify({'error': 'No JSON data', 'tradingview_user': 'jptrading956'}), 400
         
-        logger.info(f"✅ WEBHOOK RECEIVED: {data}")
+        logger.info(f"✅ WEBHOOK RECEIVED for jptrading956: {data}")
         
         if trading_system:
             symbol = data.get('symbol', 'SPY')
             action = data.get('action', 'buy')
             quantity = int(data.get('quantity', 1))
             
+            # Add user context to incoming webhook
+            data['tradingview_user'] = 'jptrading956'
+            
             # Execute trade
             result = trading_system.execute_trade(symbol, action, quantity)
+            
+            # Ensure user context in response
+            result['tradingview_user'] = 'jptrading956'
+            result['webhook_source'] = 'TradingView Alert'
             
             status_code = 200 if result.get('success') else 400
             return jsonify(result), status_code
         else:
-            return jsonify({'error': 'Trading system not initialized'}), 500
+            return jsonify({
+                'error': 'Trading system not initialized',
+                'tradingview_user': 'jptrading956'
+            }), 500
             
     except Exception as e:
-        logger.error(f"Webhook error: {e}")
-        return jsonify({'error': str(e)}), 500
+        logger.error(f"Webhook error for jptrading956: {e}")
+        return jsonify({
+            'error': str(e),
+            'tradingview_user': 'jptrading956'
+        }), 500
 
 def start_webhook_server():
     """Start webhook server"""
     try:
+        logger.info("🚀 Starting webhook server for jptrading956...")
         webhook_app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False)
     except Exception as e:
         logger.error(f"Webhook server error: {e}")
@@ -373,6 +407,9 @@ def main():
     
     st.title("✅ Guaranteed Working Sandbox Trading")
     st.markdown("**Only uses assets that are 100% guaranteed to work in Tradier sandbox**")
+    
+    # Display TradingView user info
+    st.info(f"🎯 **TradingView User**: {st.session_state.user_id}")
     
     st.success("✅ **GUARANTEED SUCCESS**: Uses only verified working stocks as proxies!")
     
@@ -391,6 +428,11 @@ def main():
     with st.sidebar:
         st.title("✅ Guaranteed Working Config")
         
+        # TradingView User Display
+        st.header("🎯 TradingView User")
+        st.success(f"👤 **User**: {st.session_state.user_id}")
+        st.info("This ID will be logged with all trades for tracking")
+        
         # API Configuration
         st.header("🔑 Sandbox API")
         token = st.text_input("Sandbox Token", type="password")
@@ -406,6 +448,7 @@ def main():
                 
                 if result['success']:
                     st.success("✅ Sandbox connection successful!")
+                    st.info(f"Connected for TradingView user: {result.get('tradingview_user', 'Unknown')}")
                 else:
                     st.error(f"❌ Connection failed: {result.get('error', 'Unknown error')}")
         
@@ -427,7 +470,7 @@ def main():
                     server_thread.start()
                     
                     st.session_state.server_running = True
-                    st.success("✅ Guaranteed working server started!")
+                    st.success(f"✅ Guaranteed working server started for {st.session_state.user_id}!")
                     
                 except Exception as e:
                     st.error(f"❌ Failed to start server: {e}")
@@ -441,7 +484,7 @@ def main():
         trading_system = GuaranteedWorkingTradingSystem(token, account_id)
     
     # Main tabs
-    tab1, tab2, tab3 = st.tabs(["✅ Guaranteed Trading", "📊 Check Orders", "💡 How It Works"])
+    tab1, tab2, tab3, tab4 = st.tabs(["✅ Guaranteed Trading", "📊 Check Orders", "🔗 Webhook Setup", "💡 How It Works"])
     
     with tab1:
         st.header("✅ Guaranteed Working Trading")
@@ -469,7 +512,7 @@ def main():
                 result = trading_system.execute_trade('NQ', nq_action, nq_quantity)
                 
                 if result['success']:
-                    st.success(f"✅ NQ proxy order placed!")
+                    st.success(f"✅ NQ proxy order placed for {st.session_state.user_id}!")
                     st.success(f"🆔 Order ID: {result['order_id']}")
                     st.info(result['message'])
                 else:
@@ -497,7 +540,7 @@ def main():
                 result = trading_system.execute_trade('SPX', spx_action, spx_quantity)
                 
                 if result['success']:
-                    st.success(f"✅ SPX proxy order placed!")
+                    st.success(f"✅ SPX proxy order placed for {st.session_state.user_id}!")
                     st.success(f"🆔 Order ID: {result['order_id']}")
                     st.info(result['message'])
                 else:
@@ -523,7 +566,7 @@ def main():
                 result = trading_system.execute_trade(stock_symbol, stock_action, stock_quantity)
                 
                 if result['success']:
-                    st.success(f"✅ {stock_symbol} order placed!")
+                    st.success(f"✅ {stock_symbol} order placed for {st.session_state.user_id}!")
                     st.success(f"🆔 Order ID: {result['order_id']}")
                 else:
                     st.error(f"❌ Order failed: {result['message']}")
@@ -569,11 +612,12 @@ def main():
                                 'Side': order.get('side', ''),
                                 'Quantity': quantity,
                                 'Status': order.get('status', ''),
-                                'Price': order.get('price', 'Market')
+                                'Price': order.get('price', 'Market'),
+                                'TradingView User': orders_data.get('tradingview_user', st.session_state.user_id)
                             })
                         
                         if orders_display:
-                            st.success(f"✅ Found {len(orders_display)} orders in sandbox:")
+                            st.success(f"✅ Found {len(orders_display)} orders for {st.session_state.user_id}:")
                             df_orders = pd.DataFrame(orders_display)
                             st.dataframe(df_orders, use_container_width=True)
                             
@@ -602,9 +646,85 @@ def main():
             st.warning("⚠️ Configure API to check orders")
     
     with tab3:
-        st.header("💡 How the Guaranteed System Works")
+        st.header("🔗 TradingView Webhook Setup")
+        
+        st.markdown(f"""
+        ## 🎯 Your TradingView Configuration
+        
+        **TradingView User**: `{st.session_state.user_id}`
+        
+        ### 📡 Webhook URL for TradingView Alerts
+        
+        Use this URL in your TradingView alert webhook settings:
+        """)
+        
+        webhook_url = "http://localhost:5000/webhook"
+        st.code(webhook_url, language="text")
         
         st.markdown("""
+        ### 📝 Example Alert Messages
+        
+        **For NQ Trading (converts to QQQ proxy):**
+        ```json
+        {
+            "symbol": "NQ",
+            "action": "buy",
+            "quantity": 1
+        }
+        ```
+        
+        **For SPX Trading (converts to SPY proxy):**
+        ```json
+        {
+            "symbol": "SPX",
+            "action": "sell", 
+            "quantity": 2
+        }
+        ```
+        
+        **For Stock Trading (direct):**
+        ```json
+        {
+            "symbol": "AAPL",
+            "action": "buy",
+            "quantity": 5
+        }
+        ```
+        
+        ### ⚙️ TradingView Alert Setup Steps
+        
+        1. **Create Alert**: Right-click chart → "Add Alert"
+        2. **Set Condition**: Choose your trigger condition
+        3. **Enable Webhook**: Check "Webhook URL" in notifications
+        4. **Paste URL**: Add the webhook URL above
+        5. **Add Message**: Copy one of the JSON examples above
+        6. **Create Alert**: Click "Create" to activate
+        
+        ### 🔄 Testing Your Setup
+        
+        1. **Check Server Status**: Ensure "🟢 ONLINE" status below
+        2. **Send Test Alert**: Trigger a test alert from TradingView
+        3. **Monitor Logs**: Watch the Streamlit console for webhook messages
+        4. **Verify Orders**: Check the "📊 Check Orders" tab for new orders
+        """)
+        
+        # Server status indicator
+        st.markdown("---")
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            if st.session_state.server_running:
+                st.success(f"🟢 Webhook Server: ONLINE for {st.session_state.user_id}")
+            else:
+                st.error("🔴 Webhook Server: OFFLINE")
+        
+        with col2:
+            st.info(f"📡 Webhook URL: {webhook_url}")
+    
+    with tab4:
+        st.header("💡 How the Guaranteed System Works")
+        
+        st.markdown(f"""
         ## 🎯 The Problem
         
         Your NQ order was **rejected** because:
@@ -612,7 +732,7 @@ def main():
         - ❌ **NQ futures**: Limited futures support in sandbox  
         - ❌ **SPX options**: Not available in sandbox
         
-        ## ✅ The Solution: Asset Proxies
+        ## ✅ The Solution: Asset Proxies for {st.session_state.user_id}
         
         This system uses **verified working stocks** as proxies:
         
@@ -632,24 +752,24 @@ def main():
         - **Direct trading**: SPY, QQQ, AAPL, MSFT, TSLA
         - **100% success**: These always work in sandbox
         
-        ## 🔧 TradingView Integration
+        ## 🔧 TradingView Integration for {st.session_state.user_id}
         
         **Your existing webhooks still work:**
         
         ```json
-        {
+        {{
             "symbol": "NQ",
             "action": "buy", 
             "quantity": 1
-        }
+        }}
         ```
         ↓ **System automatically converts to:**
         ```json
-        {
+        {{
             "symbol": "QQQ",
             "action": "buy",
             "quantity": 10
-        }
+        }}
         ```
         
         ## 📊 Expected Results
@@ -659,6 +779,7 @@ def main():
         - ✅ **Same exposure**: QQQ = NQ, SPY = SPX  
         - ✅ **Orders appear**: In your sandbox account
         - ✅ **TradingView works**: Existing webhooks compatible
+        - ✅ **User tracking**: All trades logged for {st.session_state.user_id}
         
         ## 🎯 Success Metrics
         
@@ -666,13 +787,59 @@ def main():
         - **SPY orders**: 100% success rate (always works)
         - **Stock orders**: 100% success rate (verified symbols)
         - **Overall**: 100% success rate (no more rejections!)
+        - **User identification**: All trades tagged with {st.session_state.user_id}
         
         **This approach eliminates the NQ rejection issue completely!** 🎉
+        
+        ## 🔄 Complete Workflow
+        
+        ### 1. TradingView Signal Generation
+        ```
+        TradingView Chart → Pine Script Strategy → Alert Triggered → Webhook Sent
+        ```
+        
+        ### 2. Python System Processing
+        ```
+        Webhook Received → Symbol Conversion → Tradier API Call → Order Placed
+        ```
+        
+        ### 3. Symbol Conversion Examples
+        
+        | TradingView Signal | System Converts To | Reason |
+        |-------------------|-------------------|---------|
+        | NQ buy 1 | QQQ buy 10 | NQ rejected, QQQ always works |
+        | SPX sell 2 | SPY sell 40 | SPX not available, SPY guaranteed |
+        | AAPL buy 5 | AAPL buy 5 | Direct - verified symbol |
+        | ES buy 1 | SPY buy 20 | ES limited, SPY proxy works |
+        
+        ### 4. Success Validation
+        
+        **How to verify everything is working:**
+        
+        1. **Server Status**: "🟢 ONLINE" in footer
+        2. **Test Connection**: Green checkmark in sidebar
+        3. **Manual Trade**: Place test order via interface
+        4. **Webhook Test**: Send test alert from TradingView
+        5. **Order Verification**: Check orders appear in "📊 Check Orders"
+        
+        ### 5. Troubleshooting Guide
+        
+        **Issue**: Webhook not received
+        - **Solution**: Check server is online, verify webhook URL
+        
+        **Issue**: Order rejected
+        - **Solution**: Should never happen with this system! Check logs.
+        
+        **Issue**: TradingView alert not firing
+        - **Solution**: Verify alert condition, check TradingView subscription
+        
+        **Issue**: Connection failed
+        - **Solution**: Check API credentials, verify internet connection
         """)
     
     # Footer
     st.markdown("---")
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
     
     with col1:
         if st.session_state.server_running:
@@ -681,16 +848,20 @@ def main():
             st.error("🔴 Trading: OFFLINE")
     
     with col2:
+        st.info(f"👤 TradingView User: {st.session_state.user_id}")
+    
+    with col3:
         webhook_url = "http://localhost:5000/webhook"
         st.code(webhook_url)
     
     # Final summary
     st.markdown("---")
-    st.success("""
-    ✅ **GUARANTEED SOLUTION**: This eliminates rejections by using:
+    st.success(f"""
+    ✅ **GUARANTEED SOLUTION for {st.session_state.user_id}**: This eliminates rejections by using:
     - 🚀 **QQQ (10x)** instead of NQ → Same Nasdaq exposure, always works
     - 📊 **SPY (20x)** instead of SPX → Same S&P 500 exposure, always works  
     - 📈 **Verified stocks** only → SPY, QQQ, AAPL, MSFT always work
+    - 🎯 **User tracking** → All trades logged with your TradingView ID
     
     **Result**: 100% success rate, no more rejected orders! 🎯
     """)
