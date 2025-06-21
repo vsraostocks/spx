@@ -1,0 +1,25 @@
+# TradingView to Tradier Webhook System with Streamlit Demo
+# Install with: pip install -r requirements-streamlit.txt
+
+# Core Trading System
+Flask==2.3.3
+requests==2.31.0
+python-dotenv==1.0.0
+gunicorn==21.2.0
+
+# Streamlit Demo Interface
+streamlit==1.28.1
+plotly==5.17.0
+pandas==2.1.1
+numpy==1.25.2
+
+# Additional Streamlit components (optional)
+streamlit-autorefresh==0.0.1
+streamlit-echarts==0.4.0
+streamlit-option-menu==0.3.6
+
+# Data visualization
+altair==5.1.2
+
+# Date/time handling
+pytz==2023.3
